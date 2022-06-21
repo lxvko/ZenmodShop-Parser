@@ -3940,3 +3940,4 @@ env/Scripts/pip3.exe
 env/Scripts/pybabel.exe
 env/Scripts/python.exe
 env/Scripts/pythonw.exe
+python/fetch_liquids.py
