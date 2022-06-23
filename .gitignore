@@ -3941,3 +3941,7 @@ env/Scripts/pybabel.exe
 env/Scripts/python.exe
 env/Scripts/pythonw.exe
 python/fetch_liquids.py
+__pycache__/fetch_cigarettes.cpython-310.pyc
+__pycache__/fetch_liquids.cpython-310.pyc
+__pycache__/fetch_serviced.cpython-310.pyc
+__pycache__/markups.cpython-310.pyc

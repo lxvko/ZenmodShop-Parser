@@ -82,14 +82,15 @@ async def get_page_data(session, page):
     for product in items.products:
 
         atomizers[product.product_id] = {
-            'atomizer_link': product.href,
-            'atomizer_image': product.image,
-            'atomizer_title': product.name,
-            'atomizer_description': product.short_description,
-            'atomizer_seat_diameter': str(product.product_spec[0].value) + ' мм',
-            'atomizer_blow_type': '; '.join(product.product_spec[1].values),
-            'atomizer_tightening_type': '; '.join(product.product_spec[2].values),
-            'atomizer_price': product.price
+            'link': product.href,
+            'image': product.image,
+            'title': product.name,
+            'description': product.short_description,
+            'seat_diameter': str(product.product_spec[0].value) + ' мм',
+            'blow_type': '; '.join(product.product_spec[1].values),
+            'tightening_type': '; '.join(product.product_spec[2].values),
+            'price': product.price,
+            'destiny': 'atomizer'
         }
 
 async def gather_data():
@@ -130,6 +131,11 @@ def main():
         except KeyError:
             os.remove('jsons/atomizers.json')
             main()
+        
+        if errors:
+            print(f'Расхождение в продуктах: {errors}')
+        else:
+            pass
     
     print(errors)
 

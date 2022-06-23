@@ -86,11 +86,12 @@ async def get_page_data(session, page):
     for product in items.products:
 
         cigarettes[product.product_id] = {
-            'cigarette_link': product.href,
-            'cigarette_image': product.image,
-            'cigarette_title': product.name,
-            'cigarette_description': product.short_description,
-            'cigarette_price': product.price
+            'link': product.href,
+            'image': product.image,
+            'title': product.name,
+            'description': product.short_description,
+            'price': product.price,
+            'destiny': 'cigarette'
         }
 
 
@@ -132,6 +133,11 @@ def main():
         except KeyError:
             os.remove('jsons/cigarettes.json')
             main()
+        
+        if errors:
+            return 'Найдены расхождения в данных: ' + str(errors)
+        else:
+            pass
     
     print(errors)
 

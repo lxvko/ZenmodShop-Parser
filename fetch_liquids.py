@@ -82,13 +82,14 @@ async def get_page_data(session, page):
     for product in items.products:
 
         liquids[product.product_id] = {
-            'liquid_link': product.href,
-            'liquid_image': product.image,
-            'liquid_title': product.name,
-            'liquid_description': product.short_description,
-            'liquid_taste': '; '.join(product.product_spec[0].values),
-            'liquid_is_salt': ''.join(product.product_spec[1].values),
-            'liquid_price': product.price
+            'link': product.href,
+            'image': product.image,
+            'title': product.name,
+            'description': product.short_description,
+            'taste': '; '.join(product.product_spec[0].values),
+            'is_salt': ''.join(product.product_spec[1].values),
+            'price': product.price,
+            'destiny': 'liquid'
         }
 
 
@@ -130,6 +131,11 @@ def main():
         except KeyError:
             os.remove('jsons/liquids.json')
             main()
+
+        if errors:
+            print(f'Расхождение в продуктах: {errors}')
+        else:
+            pass
     
     print(errors)
 
