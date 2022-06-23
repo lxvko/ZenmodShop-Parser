@@ -61,10 +61,10 @@ async def find_product(callback: types.CallbackQuery):
         reply_markup=nav.comebackToMenu)
     await Form.title.set()
 
-@dp.callback_query_handler(text='btnAdd')
+@dp.callback_query_handler(text='btnShowAdded')
 async def add_product(callback: types.CallbackQuery):
     await bot.edit_message_text(
-        text='Для добавления товара для мониторинга напиши его название.', 
+        text='Здесь ты можешь увидеть товары, которые отслеживаются для тебя.', 
         message_id=callback.message.message_id,
         chat_id=callback.message.chat.id,
         reply_markup=nav.comebackToMenu)

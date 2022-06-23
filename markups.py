@@ -2,11 +2,11 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 ###
 mainMenu = InlineKeyboardMarkup(row_width=2)
-btnFind = InlineKeyboardButton(text='Найти товар', callback_data='btnFind')
-btnAdd = InlineKeyboardButton(text='Добавить товар', callback_data='btnAdd')
+btnFind = InlineKeyboardButton(text='Поиск по товарам', callback_data='btnFind')
+btnShowAdded = InlineKeyboardButton(text='Отслеживаемые товары', callback_data='btnShowAdded')
 
 mainMenu.insert(btnFind)
-mainMenu.insert(btnAdd)
+mainMenu.insert(btnShowAdded)
 ###
 
 ###
@@ -21,13 +21,4 @@ failedSearch = InlineKeyboardMarkup(row_width=2)
 
 failedSearch.insert(btnFind)
 failedSearch.insert(btnComeback)
-###
-
-###
-# productActions = InlineKeyboardMarkup(row_width=1)
-# btnAddProduct = InlineKeyboardButton(text='Добавить к мониторингу', callback_data=f'btnAddProduct_{product}')
-# btnDeleteProduct = InlineKeyboardButton(text='Удалить из мониторинга', callback_data=f'btnDeleteProduct_{product}')
-
-# productActions.insert(btnAddProduct)
-# productActions.insert(btnDeleteProduct)
 ###
