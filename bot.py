@@ -29,23 +29,26 @@ class Form(StatesGroup):
 
 @dp.message_handler(commands='start')
 async def start_message(message: types.Message):
-    text = f'👋 Привет, {message.from_user.first_name}! \n \nЭтот бот создан для мониторинга цен в магазине Zenmod.'
+    first_name = message.from_user.first_name
+    text = f'👋 Привет, {first_name}! \n\nЭтот бот создан для мониторинга цен в магазине Zenmod.'
     await message.reply(text, reply=False, reply_markup=nav.mainMenu)
-    
+
     with open('base.json', 'r', encoding='utf8') as file:
-            base = json.load(file)
+        base = json.load(file)
+
     if str(message.from_user.id) not in base:
         base[str(message.from_user.id)] = {
             'username': message.from_user.username,
             'preferences': list()
         }
-    
+
     with open('base.json', 'w', encoding='utf8') as file:
-            json.dump(base, file, indent=4, ensure_ascii=False)
+        json.dump(base, file, indent=4, ensure_ascii=False)
 
 @dp.callback_query_handler(state='*', text='btnComeback')
 async def comeback_to_menu(callback: types.CallbackQuery, state: FSMContext):
     await state.finish()
+
     await bot.edit_message_text(
         text=f'👋 И снова привет! \n\nТы вернулся в главное меню.', 
         message_id=callback.message.message_id,
@@ -59,18 +62,42 @@ async def find_product(callback: types.CallbackQuery):
         message_id=callback.message.message_id,
         chat_id=callback.message.chat.id,
         reply_markup=nav.comebackToMenu)
+
     await Form.title.set()
 
 @dp.callback_query_handler(text='btnShowAdded')
-async def add_product(callback: types.CallbackQuery):
+async def show_added_products(callback: types.CallbackQuery):
+    with open('base.json', 'r', encoding='utf8') as file:
+        base = json.load(file)
+    current_user_base = base[str(callback.from_user.id)]['preferences']
+
     await bot.edit_message_text(
         text='Здесь ты можешь увидеть товары, которые отслеживаются для тебя.', 
         message_id=callback.message.message_id,
         chat_id=callback.message.chat.id,
         reply_markup=nav.comebackToMenu)
 
+    for element in current_user_base:
+        product = find_product_by_name(element)
+        number = list(product.keys())[0]
+
+        match product[number].get('destiny'):
+                case 'atomizer':
+                    text = f'[{product[number].get("title")}]({product[number].get("link")}) \nОписание: {product[number].get("description")} \nДиаметр посадки: {product[number].get("seat_diameter")} \nТип обдува: {product[number].get("blow_type")} \nТип затяжки: {product[number].get("tightening_type")} \nЦена: {product[number].get("price")}'
+                case 'cigarette':
+                    text = f'[{product[number].get("title")}]({product[number].get("link")}) \nОписание: {product[number].get("description")} \nЦена: {product[number].get("price")}'
+                case 'liquid':
+                    text = f'[{product[number].get("title")}]({product[number].get("link")}) \nОписание: {product[number].get("description")} \nВкус: {product[number].get("taste")} \nСоль: {product[number].get("is_salt")} \nЦена: {product[number].get("price")}'
+
+        await bot.send_photo(
+            callback.message.chat.id,
+            photo=product[number].get('image'),
+            caption=text,
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton(text='Удалить из мониторинга', callback_data=f'btnDeleteProduct_{number}')))
+
 @dp.message_handler(state=Form.title)
-async def process_title(message: types.Message, state: FSMContext):
+async def product_search(message: types.Message, state: FSMContext):
     await state.update_data(title=message.text)
     data = await state.get_data()
     queue = data.get('title')
@@ -79,9 +106,9 @@ async def process_title(message: types.Message, state: FSMContext):
     await asyncio.sleep(1)
     await state.finish()
     products = find_product_by_name(queue)
-    
+
     with open('base.json', 'r', encoding='utf8') as file:
-            base = json.load(file)
+        base = json.load(file)
 
     if products:
         for product in products:
@@ -109,21 +136,21 @@ async def process_title(message: types.Message, state: FSMContext):
                     reply_markup=InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton(text='Добавить к мониторингу', callback_data=f'btnAddProduct_{product}')))
     else:
         await bot.delete_message(message.chat.id, message.message_id + 1)
-        await bot.send_message(chat_id=message.chat.id, 
-                               text='Ничего не удалось найти. \nПопробуй изменить запрос или можешь вернуться в главное меню', 
-                               reply_markup=nav.failedSearch)
+        await bot.send_message(
+            chat_id=message.chat.id, 
+            text='Ничего не удалось найти. \nПопробуй изменить запрос или можешь вернуться в главное меню', 
+            reply_markup=nav.failedSearch)
 
 
 def find_product_by_name(name):
-    global products
     products = {}
 
     with open('jsons/atomizers.json', 'r', encoding='utf8') as file:
-            atomizers =  json.load(file)
+        atomizers =  json.load(file)
     with open('jsons/cigarettes.json', 'r', encoding='utf8') as file:
-            cigarettes =  json.load(file)
+        cigarettes =  json.load(file)
     with open('jsons/liquids.json', 'r', encoding='utf8') as file:
-            liquids =  json.load(file)
+        liquids =  json.load(file)
 
     for element in atomizers:
         if name in atomizers[element].get('title'):
@@ -135,42 +162,72 @@ def find_product_by_name(name):
         if name in liquids[element].get('title'):
             products[element] = liquids[element]
     return products
-            
+
+
+def find_product_by_number(number):
+    products = {}
+
+    with open('jsons/atomizers.json', 'r', encoding='utf8') as file:
+            atomizers =  json.load(file)
+    with open('jsons/cigarettes.json', 'r', encoding='utf8') as file:
+            cigarettes =  json.load(file)
+    with open('jsons/liquids.json', 'r', encoding='utf8') as file:
+            liquids =  json.load(file)
+
+    for element in atomizers:
+        if number in atomizers:
+            products[element] = atomizers[element]
+    for element in cigarettes:
+        if number in cigarettes:
+            products[element] = cigarettes[element]
+    for element in liquids:
+        if number in liquids:
+            products[element] = liquids[element]
+    return products
+
 @dp.callback_query_handler(Text(startswith='btnAddProduct_'), state='*')
 async def process_add_product(callback: types.CallbackQuery, state: FSMContext):
     await state.finish()
-    
+
     await callback.answer(f'Успешно добавлено')
     number = callback.data.rpartition('_')[2]
-    
+    products = find_product_by_number(number)
+
     with open('base.json', 'r', encoding='utf8') as file:
             base = json.load(file)
-    
+
     base[str(callback.from_user.id)]['preferences'].append(products[number].get('title'))
     with open('base.json', 'w', encoding='utf8') as file:
             json.dump(base, file, indent=4, ensure_ascii=False)
-    
-    await bot.edit_message_reply_markup(message_id=callback.message.message_id,
-                                  chat_id=callback.message.chat.id, 
-                                  reply_markup=InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton(text='Удалить из мониторинга', callback_data=f'btnDeleteProduct_{number}')))
+
+    await bot.edit_message_reply_markup(
+        message_id=callback.message.message_id,
+        chat_id=callback.message.chat.id, 
+        reply_markup=InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton(
+            text='Удалить из мониторинга', 
+            callback_data=f'btnDeleteProduct_{number}')))
 
 @dp.callback_query_handler(Text(startswith='btnDeleteProduct_'), state='*')
 async def process_delete_product(callback: types.CallbackQuery, state: FSMContext):
     await state.finish()
-    
+
     await callback.answer(f'Успешно удалено')
     number = callback.data.rpartition('_')[2]
-    
+    products = find_product_by_number(number)
+
     with open('base.json', 'r', encoding='utf8') as file:
             base = json.load(file)
 
     base[str(callback.from_user.id)]['preferences'].remove(products[number].get('title'))
     with open('base.json', 'w', encoding='utf8') as file:
             json.dump(base, file, indent=4, ensure_ascii=False)
-    
-    await bot.edit_message_reply_markup(message_id=callback.message.message_id,
-                                  chat_id=callback.message.chat.id, 
-                                  reply_markup=InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton(text='Добавить к мониторингу', callback_data=f'btnAddProduct_{number}')))
+
+    await bot.edit_message_reply_markup(
+        message_id=callback.message.message_id,
+        chat_id=callback.message.chat.id, 
+        reply_markup=InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton(
+            text='Добавить к мониторингу', 
+            callback_data=f'btnAddProduct_{number}')))
 
 async def periodic(sleep_for):
     while True:
