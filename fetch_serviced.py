@@ -85,7 +85,7 @@ async def get_page_data(session, page):
             'link': product.href,
             'image': product.image,
             'title': product.name,
-            'description': product.short_description,
+            'description': f'{product.short_description if product.short_description else "Отсутствует"}',
             'seat_diameter': str(product.product_spec[0].value) + ' мм',
             'blow_type': '; '.join(product.product_spec[1].values),
             'tightening_type': '; '.join(product.product_spec[2].values),
@@ -125,10 +125,18 @@ def main():
             for item in atomizers:
                 if atomizers[item] != old_atomizers[str(item)]:
                     errors.append(item)
+        except KeyError:
+            print(f'Лота {item} нет в базе')
+            print(f'{atomizers[item].get("link")}')
+            os.remove('jsons/atomizers.json')
+            main()
+        try:
             for item in old_atomizers:
                 if old_atomizers[item] != atomizers[int(item)]:
                     errors.append(item)
         except KeyError:
+            print(f'Лота {item} нет на сайте')
+            print(f'{old_atomizers[item].get("link")}')
             os.remove('jsons/atomizers.json')
             main()
         

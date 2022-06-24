@@ -94,7 +94,9 @@ async def show_added_products(callback: types.CallbackQuery):
             photo=product[number].get('image'),
             caption=text,
             parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton(text='Удалить из мониторинга', callback_data=f'btnDeleteProduct_{number}')))
+            reply_markup=InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton(
+                text='Удалить из мониторинга', 
+                callback_data=f'btnDeleteProduct_{number}')))
 
 @dp.message_handler(state=Form.title)
 async def product_search(message: types.Message, state: FSMContext):
@@ -126,14 +128,18 @@ async def product_search(message: types.Message, state: FSMContext):
                     photo=products[product].get('image'),
                     caption=text, 
                     parse_mode="Markdown", 
-                    reply_markup=InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton(text='Удалить из мониторинга', callback_data=f'btnDeleteProduct_{product}')))
+                    reply_markup=InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton(
+                        text='Удалить из мониторинга', 
+                        callback_data=f'btnDeleteProduct_{product}')))
             else:
                 await bot.send_photo(
                     message.chat.id,
                     photo=products[product].get('image'),
                     caption=text, 
                     parse_mode="Markdown", 
-                    reply_markup=InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton(text='Добавить к мониторингу', callback_data=f'btnAddProduct_{product}')))
+                    reply_markup=InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton(
+                        text='Добавить к мониторингу', 
+                        callback_data=f'btnAddProduct_{product}')))
     else:
         await bot.delete_message(message.chat.id, message.message_id + 1)
         await bot.send_message(
@@ -146,20 +152,26 @@ def find_product_by_name(name):
     products = {}
 
     with open('jsons/atomizers.json', 'r', encoding='utf8') as file:
-        atomizers =  json.load(file)
+        atomizers = json.load(file)
     with open('jsons/cigarettes.json', 'r', encoding='utf8') as file:
-        cigarettes =  json.load(file)
+        cigarettes = json.load(file)
     with open('jsons/liquids.json', 'r', encoding='utf8') as file:
-        liquids =  json.load(file)
+        liquids = json.load(file)
 
     for element in atomizers:
-        if name in atomizers[element].get('title'):
+        if name.lower() in atomizers[element].get('title').lower():
+            products[element] = atomizers[element]
+        if name.lower() in atomizers[element].get('description').lower():
             products[element] = atomizers[element]
     for element in cigarettes:
-        if name in cigarettes[element].get('title'):
+        if name.lower() in cigarettes[element].get('title').lower():
+            products[element] = cigarettes[element]
+        if name.lower() in cigarettes[element].get('description').lower():
             products[element] = cigarettes[element]
     for element in liquids:
-        if name in liquids[element].get('title'):
+        if name.lower() in liquids[element].get('title').lower():
+            products[element] = liquids[element]
+        if name.lower() in liquids[element].get('description').lower():
             products[element] = liquids[element]
     return products
 
@@ -168,11 +180,11 @@ def find_product_by_number(number):
     products = {}
 
     with open('jsons/atomizers.json', 'r', encoding='utf8') as file:
-            atomizers =  json.load(file)
+        atomizers = json.load(file)
     with open('jsons/cigarettes.json', 'r', encoding='utf8') as file:
-            cigarettes =  json.load(file)
+        cigarettes = json.load(file)
     with open('jsons/liquids.json', 'r', encoding='utf8') as file:
-            liquids =  json.load(file)
+        liquids = json.load(file)
 
     for element in atomizers:
         if number in atomizers:
@@ -230,13 +242,24 @@ async def process_delete_product(callback: types.CallbackQuery, state: FSMContex
             callback_data=f'btnAddProduct_{number}')))
 
 async def periodic(sleep_for):
+    with open('jsons/atomizers.json', 'r', encoding='utf8') as file:
+        atomizers = json.load(file)
+    with open('jsons/cigarettes.json', 'r', encoding='utf8') as file:
+        cigarettes = json.load(file)
+    with open('jsons/liquids.json', 'r', encoding='utf8') as file:
+        liquids = json.load(file)
+
     while True:
         await asyncio.sleep(sleep_for)
-        now = datetime.utcnow()
-        print(f"{now}")
+        fetch_cigarettes()
+        await asyncio.sleep(sleep_for)
+        fetch_liquids()
+        await asyncio.sleep(sleep_for)
+        fetch_serviced()
+        
         # await bot.send_message(id, f"{now}", disable_notification=True)
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
-    loop.create_task(periodic(10))
+    loop.create_task(periodic(15))
     executor.start_polling(dp)

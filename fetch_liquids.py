@@ -85,7 +85,7 @@ async def get_page_data(session, page):
             'link': product.href,
             'image': product.image,
             'title': product.name,
-            'description': product.short_description,
+            'description': f'{product.short_description if product.short_description else "Отсутствует"}',
             'taste': '; '.join(product.product_spec[0].values),
             'is_salt': ''.join(product.product_spec[1].values),
             'price': product.price,
@@ -125,10 +125,18 @@ def main():
             for item in liquids:
                 if liquids[item] != old_liquids[str(item)]:
                     errors.append(item)
+        except KeyError:
+            print(f'Лота {item} нет в базе')
+            print(f'{liquids[item].get("link")}')
+            os.remove('jsons/liquids.json')
+            main()
+        try:
             for item in old_liquids:
                 if old_liquids[item] != liquids[int(item)]:
                     errors.append(item)
         except KeyError:
+            print(f'Лота {item} нет на сайте')
+            print(f'{old_liquids[item].get("link")}')
             os.remove('jsons/liquids.json')
             main()
 

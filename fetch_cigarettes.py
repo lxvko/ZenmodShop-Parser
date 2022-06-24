@@ -77,7 +77,7 @@ async def get_page_data(session, page):
         'path': '61',
     }
 
-    
+
     async with session.post(url=url, headers=headers, cookies=cookies, data=data) as response:
         response_json = await response.json()
         data = json.dumps(response_json, indent=2)
@@ -89,7 +89,7 @@ async def get_page_data(session, page):
             'link': product.href,
             'image': product.image,
             'title': product.name,
-            'description': product.short_description,
+            'description': f'{product.short_description if product.short_description else "Отсутствует"}',
             'price': product.price,
             'destiny': 'cigarette'
         }
@@ -127,10 +127,18 @@ def main():
             for item in cigarettes:
                 if cigarettes[item] != old_cigarettes[str(item)]:
                     errors.append(item)
+        except KeyError:
+            print(f'Лота {item} нет в базе')
+            print(f'{cigarettes[item].get("link")}')
+            os.remove('jsons/cigarettes.json')
+            main()
+        try:
             for item in old_cigarettes:
                 if old_cigarettes[item] != cigarettes[int(item)]:
                     errors.append(item)
         except KeyError:
+            print(f'Лота {item} нет на сайте')
+            print(f'{old_cigarettes[item].get("link")}')
             os.remove('jsons/cigarettes.json')
             main()
         
